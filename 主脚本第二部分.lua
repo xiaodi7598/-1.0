@@ -181,6 +181,9 @@ if checkBlacklist() then
     return  -- 终止脚本运行
 end
 
+local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E5%8D%A1%E5%AF%86%E7%B3%BB%E7%BB%9F%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86.lua?token=GHSAT0AAAAAADSIBLVF5UTJPDQFV6VE37WM2KWM5JA"))()
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua?token=GHSAT0AAAAAADSIBLVFFYU5E2NDWZ263YKW2KWMYZA"))()
+
 Notification:Notify(
     {Title = "正在加载脚本", Description = "请耐心等待"},
     {OutlineColor = Color3.fromRGB(255, 255, 255), Time = 20, Type = "image"},
@@ -201,7 +204,7 @@ local CONFIG = {
     PRIMARY_COLOR = Color3.fromRGB(200, 200, 200),
     SECONDARY_COLOR = Color3.fromRGB(100, 100, 100),
     LOGO_IMAGE = "rbxassetid://6954167216",
-    LOGO_TEXT = "二代作者：小迪",
+    LOGO_TEXT = "作者：未知量黑白",
     MAIN_BG_COLOR = Color3.fromRGB(15, 15, 15),
     MAIN_BORDER_COLOR = Color3.fromRGB(200, 200, 200),
     TEXT_COLOR = Color3.fromRGB(255, 255, 255),
@@ -279,7 +282,7 @@ welcomeText.Size = UDim2.new(1, 0, 0.2, 0)
 welcomeText.Position = UDim2.new(0.5, 0, 0.1, 0)
 welcomeText.AnchorPoint = Vector2.new(0.5, 0.1)
 welcomeText.BackgroundTransparency = 1
-welcomeText.Text = "欢迎使用迪脚本更新黑白脚本"
+welcomeText.Text = "欢迎使用黑白脚本"
 welcomeText.TextColor3 = CONFIG.TEXT_COLOR
 welcomeText.TextSize = 32
 welcomeText.Font = Enum.Font.GothamBlack
@@ -793,11 +796,31 @@ TweenService:Create(mainContainer, TweenInfo.new(0.3), {
 
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
+local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E5%8D%A1%E5%AF%86%E7%B3%BB%E7%BB%9F%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86.lua?token=GHSAT0AAAAAADSIBLVF5UTJPDQFV6VE37WM2KWM5JA"))()
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua?token=GHSAT0AAAAAADSIBLVFFYU5E2NDWZ263YKW2KWMYZA"))()
+
 Notification:Notify(
     {Title = "欢迎使用黑白脚本", Description = "请加入QQ群：946671668"},
     {OutlineColor = Color3.fromRGB(255, 255, 255), Time = 9, Type = "image"},
     {Image = "http://www.roblox.com/asset/?id=6023426923", ImageColor = Color3.fromRGB(150, 150, 150)}
 )
+
+local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E5%8D%A1%E5%AF%86%E7%B3%BB%E7%BB%9F%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86.lua?token=GHSAT0AAAAAADSIBLVF5UTJPDQFV6VE37WM2KWM5JA"))()
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua?token=GHSAT0AAAAAADSIBLVFFYU5E2NDWZ263YKW2KWMYZA"))()
+
+Notification:Notify(
+    {Title = "已开启反挂机", Description = "作者帮助你开启反挂机了"},
+    {OutlineColor = Color3.fromRGB(255, 255, 255), Time = 9, Type = "image"},
+    {Image = "http://www.roblox.com/asset/?id=6023426923", ImageColor = Color3.fromRGB(150, 150, 150)}
+)
+
+-- 反挂机脚本保持不变
+local vu = game:GetService("VirtualUser")
+game:GetService("Players").LocalPlayer.Idled:connect(function()
+    vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    wait(1)
+    vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+end)
 
 local Window = WindUI:CreateWindow({
     Title = '<font color="#FF3333">黑</font><font color="#FF9933">白</font><font color="#FFFF33">脚</font><font color="#33FF33">本</font>    ',  
@@ -8320,6 +8343,6 @@ end)
 -- 更多 (Tab97)
 Button(Tab97, "服务器二", function()
     pcall(function()
-        loadstring(game:HttpGet('https://raw.githubusercontent.com/tfcygvunbind/557/main/服务器二'))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E6%9C%8D%E5%8A%A1%E5%99%A82%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86.lua?token=GHSAT0AAAAAADSIBLVESUQWWIPOPZA2LWZU2KWM7CQ"))()
     end)
 end)
