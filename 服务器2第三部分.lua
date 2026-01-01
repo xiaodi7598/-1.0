@@ -124,8 +124,8 @@ end)()
 
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/raw/main/dist/main.lua"))()
 
-local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E5%8D%A1%E5%AF%86%E7%B3%BB%E7%BB%9F%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86.lua?token=GHSAT0AAAAAADSIBLVF5UTJPDQFV6VE37WM2KWM5JA"))()
-local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua?token=GHSAT0AAAAAADSIBLVFFYU5E2NDWZ263YKW2KWMYZA"))()
+local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E5%8D%A1%E5%AF%86%E7%B3%BB%E7%BB%9F%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86.lua"))()
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua"))()
 
 Notification:Notify(
     {Title = "欢迎使用黑白脚本", Description = "请加入QQ群：946671668"},
@@ -133,8 +133,8 @@ Notification:Notify(
     {Image = "http://www.roblox.com/asset/?id=6023426923", ImageColor = Color3.fromRGB(150, 150, 150)}
 )
 
-local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E5%8D%A1%E5%AF%86%E7%B3%BB%E7%BB%9F%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86.lua?token=GHSAT0AAAAAADSIBLVF5UTJPDQFV6VE37WM2KWM5JA"))()
-local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua?token=GHSAT0AAAAAADSIBLVFFYU5E2NDWZ263YKW2KWMYZA"))()
+local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E5%8D%A1%E5%AF%86%E7%B3%BB%E7%BB%9F%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86.lua"))()
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua"))()
 
 Notification:Notify(
     {Title = "已开启反挂机", Description = "作者帮助你开启反挂机了"},
@@ -665,6 +665,6 @@ local Tab18 = Tab("格林威尔")
 -- 格林威尔 (Tab18)
 Button(Tab18, "脚本1", function()
     pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua?token=GHSAT0AAAAAADSIBLVFFYU5E2NDWZ263YKW2KWMYZA"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua"))()
     end)
 end)
