@@ -124,17 +124,17 @@ end)()
 
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/raw/main/dist/main.lua"))()
 
-local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E5%8D%A1%E5%AF%86%E7%B3%BB%E7%BB%9F%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86.lua"))()
-local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua"))()
+local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E9%80%9A%E7%9F%A51.lua"))()
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E9%80%9A%E7%9F%A52.lua"))()
 
 Notification:Notify(
-    {Title = "欢迎使用黑白脚本", Description = "请加入QQ群：946671668"},
+    {Title = "欢迎使用小迪黑白脚本", Description = "请加入QQ群：946671668"},
     {OutlineColor = Color3.fromRGB(255, 255, 255), Time = 9, Type = "image"},
     {Image = "http://www.roblox.com/asset/?id=6023426923", ImageColor = Color3.fromRGB(150, 150, 150)}
 )
 
-local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E5%8D%A1%E5%AF%86%E7%B3%BB%E7%BB%9F%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86.lua"))()
-local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua"))()
+local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E9%80%9A%E7%9F%A51.lua"))()
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E9%80%9A%E7%9F%A52.lua"))()
 
 Notification:Notify(
     {Title = "已开启反挂机", Description = "作者帮助你开启反挂机了"},
@@ -153,7 +153,7 @@ end)
 local Window = WindUI:CreateWindow({
     Title = '<font color="#FF3333">黑</font><font color="#FF9933">白</font><font color="#FFFF33">脚</font><font color="#33FF33">本</font>',  
     Icon = "rbxassetid://7040347038",
-    Author = "作者:未知量黑白",
+    Author = "作者:小迪",
     Folder = "WindUI_Example",
     Size = UDim2.fromOffset(300, 350),
     Theme = "Dark",
