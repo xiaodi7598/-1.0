@@ -169,7 +169,7 @@ local function checkBlacklist()
     if BLACKLIST[tostring(player.UserId)] or BLACKLIST[player.Name] then
         -- 尝试踢出玩家
         pcall(function()
-            player:Kick("你已被列入黑名单，无法使用黑白脚本。")
+            player:Kick("你已被列入黑名单，无法使用小迪黑白脚本。")
         end)
         return true
     end
@@ -181,8 +181,8 @@ if checkBlacklist() then
     return  -- 终止脚本运行
 end
 
-local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E5%8D%A1%E5%AF%86%E7%B3%BB%E7%BB%9F%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86.lua"))()
-local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua"))()
+local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E9%80%9A%E7%9F%A51.lua"))()
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E9%80%9A%E7%9F%A52.lua"))()
 
 Notification:Notify(
     {Title = "正在加载脚本", Description = "请耐心等待"},
@@ -204,7 +204,7 @@ local CONFIG = {
     PRIMARY_COLOR = Color3.fromRGB(200, 200, 200),
     SECONDARY_COLOR = Color3.fromRGB(100, 100, 100),
     LOGO_IMAGE = "rbxassetid://6954167216",
-    LOGO_TEXT = "作者：未知量黑白",
+    LOGO_TEXT = "作者：小迪",
     MAIN_BG_COLOR = Color3.fromRGB(15, 15, 15),
     MAIN_BORDER_COLOR = Color3.fromRGB(200, 200, 200),
     TEXT_COLOR = Color3.fromRGB(255, 255, 255),
@@ -459,354 +459,19 @@ coroutine.wrap(borderPulseAnimation)()
 coroutine.wrap(loadingAnimation)()
 local player = game.Players.LocalPlayer
 
--- 黑白脚本公告 - 带粒子特效版
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-
--- 创建GUI
-local mainGui = Instance.new("ScreenGui")
-mainGui.Name = "BlackWhiteScriptGUI"
-mainGui.Parent = playerGui
-mainGui.ResetOnSpawn = false
-mainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
--- 主容器
-local mainContainer = Instance.new("Frame")
-mainContainer.Name = "MainContainer"
-mainContainer.Size = UDim2.new(0, 500, 0, 280)
-mainContainer.Position = UDim2.new(0.5, -250, 0.5, -140)
-mainContainer.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-mainContainer.BorderColor3 = Color3.fromRGB(200, 200, 200)
-mainContainer.BorderSizePixel = 1
-mainContainer.Parent = mainGui
-
--- 圆角
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = mainContainer
-
--- 标题栏
-local titleBar = Instance.new("Frame")
-titleBar.Name = "TitleBar"
-titleBar.Size = UDim2.new(1, 0, 0, 40)
-titleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-titleBar.Parent = mainContainer
-
--- 标题文本
-local titleText = Instance.new("TextLabel")
-titleText.Name = "TitleText"
-titleText.Size = UDim2.new(1, -40, 1, 0)
-titleText.Position = UDim2.new(0, 10, 0, 0)
-titleText.BackgroundTransparency = 1
-titleText.Text = "黑白脚本公告"
-titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleText.TextSize = 18
-titleText.Font = Enum.Font.SourceSansBold
-titleText.TextXAlignment = Enum.TextXAlignment.Left
-titleText.TextYAlignment = Enum.TextYAlignment.Center
-titleText.Parent = titleBar
-
--- 最小化按钮
-local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Name = "MinimizeButton"
-minimizeBtn.Size = UDim2.new(0, 40, 1, 0)
-minimizeBtn.Position = UDim2.new(1, -40, 0, 0)
-minimizeBtn.BackgroundTransparency = 1
-minimizeBtn.Text = "-"
-minimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-minimizeBtn.TextSize = 24
-minimizeBtn.Font = Enum.Font.SourceSans
-minimizeBtn.Parent = titleBar
-
--- 内容区域
-local contentArea = Instance.new("Frame")
-contentArea.Name = "ContentArea"
-contentArea.Size = UDim2.new(1, 0, 1, -90)
-contentArea.Position = UDim2.new(0, 0, 0, 40)
-contentArea.BackgroundTransparency = 1
-contentArea.Parent = mainContainer
-
--- 协议文本框
-local agreementBox = Instance.new("TextLabel")
-agreementBox.Name = "AgreementBox"
-agreementBox.Size = UDim2.new(0.9, 0, 1, 0)
-agreementBox.Position = UDim2.new(0.05, 0, 0, 0)
-agreementBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-agreementBox.Text = "1.欢迎使用黑白脚本.\n2.以前的黑白脚本已失效😭\n3.弄到最下面有一个更多，以后肑服务器就在这里\n4.今月更新：添加自由视角（在通用三）、新背景、抱人（在通用三）"
-agreementBox.TextColor3 = Color3.fromRGB(240, 240, 240)
-agreementBox.TextSize = 14
-agreementBox.Font = Enum.Font.SourceSans
-agreementBox.TextWrapped = true
-agreementBox.TextXAlignment = Enum.TextXAlignment.Left
-agreementBox.TextYAlignment = Enum.TextYAlignment.Top
-agreementBox.Parent = contentArea
-
--- 按钮容器
-local buttonContainer = Instance.new("Frame")
-buttonContainer.Name = "ButtonContainer"
-buttonContainer.Size = UDim2.new(1, 0, 0, 50)
-buttonContainer.Position = UDim2.new(0, 0, 1, -50)
-buttonContainer.BackgroundTransparency = 1
-buttonContainer.Parent = mainContainer
-
--- 不同意按钮
-local disagreeBtn = Instance.new("TextButton")
-disagreeBtn.Name = "DisagreeButton"
-disagreeBtn.Size = UDim2.new(0, 160, 0, 40)
-disagreeBtn.Position = UDim2.new(0, 60, 0, 5)
-disagreeBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-disagreeBtn.Text = "那咋了🙄"
-disagreeBtn.TextColor3 = Color3.fromRGB(240, 240, 240)
-disagreeBtn.TextSize = 16
-disagreeBtn.Font = Enum.Font.SourceSansBold
-disagreeBtn.Parent = buttonContainer
-
--- 同意按钮
-local agreeBtn = Instance.new("TextButton")
-agreeBtn.Name = "AgreeButton"
-agreeBtn.Size = UDim2.new(0, 160, 0, 40)
-agreeBtn.Position = UDim2.new(1, -220, 0, 5)
-agreeBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-agreeBtn.Text = "知道了"
-agreeBtn.TextColor3 = Color3.fromRGB(240, 240, 240)
-agreeBtn.TextSize = 16
-agreeBtn.Font = Enum.Font.SourceSansBold
-agreeBtn.Parent = buttonContainer
-
--- 加载动画容器
-local loadingContainer = Instance.new("Frame")
-loadingContainer.Name = "LoadingContainer"
-loadingContainer.Size = UDim2.new(1, 0, 1, 0)
-loadingContainer.BackgroundTransparency = 1
-loadingContainer.Visible = false
-loadingContainer.Parent = mainContainer
-
--- 加载图标
-local loadingIcon = Instance.new("ImageLabel")
-loadingIcon.Name = "LoadingIcon"
-loadingIcon.Size = UDim2.new(0, 50, 0, 50)
-loadingIcon.Position = UDim2.new(0.5, -25, 0.5, -35)
-loadingIcon.BackgroundTransparency = 1
-loadingIcon.Image = "rbxassetid://108376843"
-loadingIcon.ImageColor3 = Color3.fromRGB(200, 200, 200)
-loadingIcon.Parent = loadingContainer
-
--- 加载文本
-local loadingText = Instance.new("TextLabel")
-loadingText.Name = "LoadingText"
-loadingText.Size = UDim2.new(0, 100, 0, 20)
-loadingText.Position = UDim2.new(0.5, -50, 0.5, 25)
-loadingText.BackgroundTransparency = 1
-loadingText.Text = "加载中..."
-loadingText.TextColor3 = Color3.fromRGB(200, 200, 200)
-loadingText.TextSize = 14
-loadingText.Font = Enum.Font.SourceSans
-loadingText.TextXAlignment = Enum.TextXAlignment.Center
-loadingText.Parent = loadingContainer
-
--- 红色粒子特效系统
-local particleSystem = Instance.new("Frame")
-particleSystem.Name = "ParticleSystem"
-particleSystem.Size = UDim2.new(1, 0, 1, 0)
-particleSystem.BackgroundTransparency = 1
-particleSystem.Parent = mainContainer
-
--- 创建粒子函数
-local function createParticle()
-    local particle = Instance.new("Frame")
-    particle.Name = "Particle"
-    particle.Size = UDim2.new(0, math.random(2, 5), 0, math.random(2, 5))
-    particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
-    particle.BackgroundColor3 = Color3.fromRGB(255, math.random(0, 50), math.random(0, 50))
-    particle.BackgroundTransparency = 0.5
-    particle.Parent = particleSystem
-    
-    -- 粒子动画
-    local tweenInfo = TweenInfo.new(
-        math.random(1, 3),
-        Enum.EasingStyle.Linear,
-        Enum.EasingDirection.Out
-    )
-    
-    local tween = TweenService:Create(particle, tweenInfo, {
-        Position = UDim2.new(
-            math.random(), 0,
-            math.random(), 0
-        ),
-        Transparency = 1,
-        Size = UDim2.new(0, 0, 0, 0)
-    })
-    
-    tween:Play()
-    tween.Completed:Connect(function()
-        particle:Destroy()
-    end)
-end
-
--- 定期创建粒子
-spawn(function()
-    while true do
-        if mainGui.Parent then
-            for i = 1, math.random(1, 3) do
-                createParticle()
-            end
-        end
-        wait(math.random(0.1, 0.5))
-    end
-end)
-
--- 变量初始化
-local isMinimized = false
-local isDragging = false
-local dragStartPosition = Vector2.new()
-local dragStartFramePosition = UDim2.new()
-
--- 窗口拖动功能
-titleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        isDragging = true
-        dragStartPosition = input.Position
-        dragStartFramePosition = mainContainer.Position
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStartPosition
-        mainContainer.Position = UDim2.new(
-            dragStartFramePosition.X.Scale,
-            dragStartFramePosition.X.Offset + delta.X,
-            dragStartFramePosition.Y.Scale,
-            dragStartFramePosition.Y.Offset + delta.Y
-        )
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        isDragging = false
-    end
-end)
-
--- 最小化功能
-minimizeBtn.MouseButton1Click:Connect(function()
-    isMinimized = not isMinimized
-    
-    if isMinimized then
-        TweenService:Create(mainContainer, TweenInfo.new(0.2), {
-            Size = UDim2.new(0, 500, 0, 40)
-        }):Play()
-        contentArea.Visible = false
-        buttonContainer.Visible = false
-        particleSystem.Visible = false
-    else
-        TweenService:Create(mainContainer, TweenInfo.new(0.2), {
-            Size = UDim2.new(0, 500, 0, 280)
-        }):Play()
-        contentArea.Visible = true
-        buttonContainer.Visible = true
-        particleSystem.Visible = true
-    end
-end)
-
--- 按钮悬停效果
-local function addButtonHoverEffect(button)
-    button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.1), {
-            BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-            TextColor3 = Color3.fromRGB(255, 255, 255)
-        }):Play()
-    end)
-    
-    button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.1), {
-            BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-            TextColor3 = Color3.fromRGB(240, 240, 240)
-        }):Play()
-    end)
-end
-
-addButtonHoverEffect(disagreeBtn)
-addButtonHoverEffect(agreeBtn)
-
-minimizeBtn.MouseEnter:Connect(function()
-    TweenService:Create(minimizeBtn, TweenInfo.new(0.1), {
-        TextColor3 = Color3.fromRGB(255, 255, 255)
-    }):Play()
-end)
-
-minimizeBtn.MouseLeave:Connect(function()
-    TweenService:Create(minimizeBtn, TweenInfo.new(0.1), {
-        TextColor3 = Color3.fromRGB(200, 200, 200)
-    }):Play()
-end)
-
--- 加载动画
-local function startLoading()
-    loadingContainer.Visible = true
-    contentArea.Visible = false
-    buttonContainer.Visible = false
-    particleSystem.Visible = false
-    
-    -- 旋转动画
-    spawn(function()
-        while loadingContainer.Visible do
-            loadingIcon.Rotation = loadingIcon.Rotation + 10
-            wait(0.05)
-        end
-    end)
-end
-
--- 按钮点击事件
-disagreeBtn.MouseButton1Click:Connect(function()
-    startLoading()
-    wait(1)
-    TweenService:Create(mainContainer, TweenInfo.new(0.3), {
-        Size = UDim2.new(0, 0, 0, 0),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Transparency = 1
-    }):Play()
-    wait(0.3)
-    mainGui:Destroy()
-end)
-
-agreeBtn.MouseButton1Click:Connect(function()
-    startLoading()
-    wait(1)
-    TweenService:Create(mainContainer, TweenInfo.new(0.3), {
-        Size = UDim2.new(0, 0, 0, 0),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Transparency = 1
-    }):Play()
-    wait(0.3)
-    mainGui:Destroy()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/Asddffgujhh/-/refs/heads/main/BBBBBSSSSS'))()
-end)
-
--- 初始淡入动画
-mainContainer.Transparency = 1
-TweenService:Create(mainContainer, TweenInfo.new(0.3), {
-    Transparency = 0
-}):Play()
-
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
-local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E5%8D%A1%E5%AF%86%E7%B3%BB%E7%BB%9F%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86.lua"))()
-local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua"))()
+local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E9%80%9A%E7%9F%A51.lua"))()
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E9%80%9A%E7%9F%A52.lua"))()
 
 Notification:Notify(
-    {Title = "欢迎使用黑白脚本", Description = "请加入QQ群：946671668"},
+    {Title = "欢迎使用小迪黑白脚本", Description = "请加入QQ群：946671668"},
     {OutlineColor = Color3.fromRGB(255, 255, 255), Time = 9, Type = "image"},
     {Image = "http://www.roblox.com/asset/?id=6023426923", ImageColor = Color3.fromRGB(150, 150, 150)}
 )
 
-local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E5%8D%A1%E5%AF%86%E7%B3%BB%E7%BB%9F%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86.lua"))()
-local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E4%B8%BB%E8%84%9A%E6%9C%AC%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86.lua"))()
+local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E9%80%9A%E7%9F%A51.lua"))()
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaodi7598/-1.0/refs/heads/main/%E9%80%9A%E7%9F%A52.lua"))()
 
 Notification:Notify(
     {Title = "已开启反挂机", Description = "作者帮助你开启反挂机了"},
@@ -825,7 +490,7 @@ end)
 local Window = WindUI:CreateWindow({
     Title = '<font color="#FF3333">黑</font><font color="#FF9933">白</font><font color="#FFFF33">脚</font><font color="#33FF33">本</font>    ',  
     Icon = "badge-check",
-    Author = "作者:未知量黑白",
+    Author = "作者:小迪",
     Folder = "WindUI_Example",
     Size = UDim2.fromOffset(300, 350),
     Theme = "Dark",
@@ -878,7 +543,7 @@ end)
 
 
 Window:EditOpenButton({
-    Title = "打开黑白脚本",
+    Title = "打开小迪黑白脚本",
     Icon = "monitor",
     CornerRadius = UDim.new(0,16),
     StrokeThickness = 2,
