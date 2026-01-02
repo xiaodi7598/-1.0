@@ -659,6 +659,7 @@ local Tab17 = Tab("盲射")
 Button(Tab17, "盲射脚本1", function()
     pcall(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/gumanba/Scripts/main/BlindShot"))()
+    end) -- 这是需要添加的闭合
 end)
 
 local Tab18 = Tab("格林威尔")
