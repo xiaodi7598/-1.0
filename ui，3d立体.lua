@@ -152,6 +152,11 @@ function Fenglib:CreateWindow(Config)
     Window.CurrentConfig = ""
     Window._3DModeEnabled = false
     Window._3DObjects = nil
+    Window._3DSettings = {
+        distance = 3,
+        verticalOffset = 0,
+        horizontalOffset = 0
+    }
 
     if Config.Theme then
         if type(Config.Theme) == "string" then
@@ -696,22 +701,32 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
-    -- ========== 3D 效果核心功能 ==========
-    local function SwitchTo3DMode(distance, sizeScale)
+    -- ========== 3D 效果核心功能（修正版） ==========
+    local function update3DPosition()
+        if not Window._3DModeEnabled or not Window._3DObjects or not Window._3DObjects.Billboard then return end
+        local settings = Window._3DSettings
+        local offset = Vector3.new(settings.horizontalOffset or 0, 2 + (settings.verticalOffset or 0), settings.distance or 3)
+        Window._3DObjects.Billboard.StudsOffset = offset
+    end
+
+    local function SwitchTo3DMode(distance, verticalOffset, horizontalOffset)
         if Window._3DModeEnabled then return end
         
-        distance = distance or 3
-        sizeScale = sizeScale or 1.5
+        distance = distance or Window._3DSettings.distance
+        verticalOffset = verticalOffset or Window._3DSettings.verticalOffset
+        horizontalOffset = horizontalOffset or Window._3DSettings.horizontalOffset
         
         -- 创建BillboardGui
         local billboardGui = Instance.new("BillboardGui")
         billboardGui.Name = "3D_UIBillboard"
-        billboardGui.Size = UDim2.new(0, 500 * sizeScale, 0, 300 * sizeScale)
-        billboardGui.StudsOffset = Vector3.new(0, 2, distance)
+        billboardGui.Size = UDim2.new(0, 550, 0, 350)  -- 稍大一点方便点击
+        billboardGui.StudsOffset = Vector3.new(horizontalOffset, 2 + verticalOffset, distance)
         billboardGui.AlwaysOnTop = true
-        billboardGui.MaxDistance = 25
+        billboardGui.MaxDistance = 30
         billboardGui.Enabled = true
         billboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        -- 重要：允许点击
+        billboardGui.Active = true
         
         -- 添加光晕效果
         local glowFrame = Instance.new("Frame")
@@ -746,7 +761,7 @@ function Fenglib:CreateWindow(Config)
         shadowCorner.Parent = shadowFrame
         shadowFrame.Parent = billboardGui
         
-        -- 保存原UI内容
+        -- 保存原UI内容（除了通知栏和打开按钮）
         local originalChildren = {}
         for _, child in ipairs(ScreenGui:GetChildren()) do
             if child ~= OpenButton and child ~= NotificationHolder then
@@ -761,7 +776,7 @@ function Fenglib:CreateWindow(Config)
         -- 调整MainFrame大小
         local mainFrame3D = billboardGui:FindFirstChild("FengYu-Bento")
         if mainFrame3D then
-            mainFrame3D.Size = UDim2.new(0, 500 * sizeScale, 0, 300 * sizeScale)
+            mainFrame3D.Size = UDim2.new(0, 550, 0, 350)
             mainFrame3D.Position = UDim2.new(0.5, 0, 0.5, 0)
             
             -- 添加3D边框光效
@@ -796,9 +811,15 @@ function Fenglib:CreateWindow(Config)
                 if floatConnection then floatConnection:Disconnect() end
                 return
             end
-            time = time + delta * 1.5
-            local yOffset = math.sin(time) * 0.05
-            billboardGui.StudsOffset = Vector3.new(0, 2 + yOffset, distance)
+            time = time + delta * 1.2
+            -- 轻微上下浮动，但不影响点击
+            local yOffset = math.sin(time) * 0.03
+            local settings = Window._3DSettings
+            billboardGui.StudsOffset = Vector3.new(
+                settings.horizontalOffset or 0,
+                2 + (settings.verticalOffset or 0) + yOffset,
+                settings.distance or 3
+            )
             
             local pulse = 0.7 + math.sin(time * 3) * 0.15
             if glowFrame then
@@ -807,7 +828,7 @@ function Fenglib:CreateWindow(Config)
             end
         end)
         
-        -- 附加到玩家
+        -- 附加到玩家角色头部
         local function attachToPlayer()
             local character = LocalPlayer.Character
             if character and character:FindFirstChild("Head") then
@@ -829,7 +850,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
         
-        -- 隐藏原ScreenGui
+        -- 隐藏原ScreenGui（但不销毁，方便切换回来）
         ScreenGui.Enabled = false
         OpenButton.Visible = false
         
@@ -886,8 +907,8 @@ function Fenglib:CreateWindow(Config)
             SwitchTo2DMode()
             Window:Notification("3D模式", "已切换到2D模式", "Info", 2)
         else
-            SwitchTo3DMode(3, 1.5)
-            Window:Notification("3D模式", "已切换到3D模式，UI将出现在玩家面前", "Success", 2)
+            SwitchTo3DMode()
+            Window:Notification("3D模式", "UI已出现在角色面前，可正常点击", "Success", 2)
         end
     end
     
@@ -896,7 +917,7 @@ function Fenglib:CreateWindow(Config)
         Toggle3DMode()
     end)
     
-    -- 修改按钮提示
+    -- 按钮提示
     local btnTooltip = Instance.new("TextLabel")
     btnTooltip.Text = "切换2D/3D模式"
     btnTooltip.Size = UDim2.new(0, 100, 0, 20)
@@ -916,6 +937,57 @@ function Fenglib:CreateWindow(Config)
     Toggle3DBtn.MouseLeave:Connect(function()
         btnTooltip.Visible = false
     end)
+
+    -- 添加3D设置控件（距离和垂直偏移）
+    -- 我们可以在UI内部创建一个默认的“3D设置”部分，但为了不影响原有代码，这里提供API方法
+    -- 用户可以通过调用 Window:Create3DSettingsTab(tab) 来创建，或者直接使用下面的方法
+    function Window:Set3DDistance(distance)
+        distance = clamp(distance, 1, 8)
+        Window._3DSettings.distance = distance
+        if Window._3DModeEnabled and Window._3DObjects and Window._3DObjects.Billboard then
+            update3DPosition()
+        end
+    end
+    
+    function Window:Set3DVerticalOffset(offset)
+        offset = clamp(offset, -2, 3)
+        Window._3DSettings.verticalOffset = offset
+        if Window._3DModeEnabled and Window._3DObjects and Window._3DObjects.Billboard then
+            update3DPosition()
+        end
+    end
+    
+    function Window:Set3DHorizontalOffset(offset)
+        offset = clamp(offset, -2, 2)
+        Window._3DSettings.horizontalOffset = offset
+        if Window._3DModeEnabled and Window._3DObjects and Window._3DObjects.Billboard then
+            update3DPosition()
+        end
+    end
+    
+    function Window:Create3DSettingsTab(parentTab)
+        local section = parentTab:Section("⚙️ 3D模式设置")
+        section:Slider("UI距离", 1, 8, Window._3DSettings.distance, function(val)
+            Window:Set3DDistance(val)
+        end)
+        section:Slider("垂直偏移", -2, 3, Window._3DSettings.verticalOffset, function(val)
+            Window:Set3DVerticalOffset(val)
+        end)
+        section:Slider("水平偏移", -2, 2, Window._3DSettings.horizontalOffset, function(val)
+            Window:Set3DHorizontalOffset(val)
+        end)
+        section:Button("重新附加到角色", function()
+            if Window._3DModeEnabled and Window._3DObjects and Window._3DObjects.Billboard then
+                local character = LocalPlayer.Character
+                if character and character:FindFirstChild("Head") then
+                    Window._3DObjects.Billboard.Adornee = character.Head
+                    Window:Notification("3D模式", "已重新附加到角色", "Success", 1)
+                else
+                    Window:Notification("3D模式", "未找到角色头部", "Error", 1)
+                end
+            end
+        end)
+    end
 
     function Window:Notification(titleText, descText, notifType, duration)
         notifType = notifType or "Info"
@@ -1114,8 +1186,8 @@ function Fenglib:CreateWindow(Config)
         end
     end
     
-    function Window:Enable3DMode(distance, sizeScale)
-        return SwitchTo3DMode(distance or 3, sizeScale or 1.5)
+    function Window:Enable3DMode(distance, verticalOffset, horizontalOffset)
+        return SwitchTo3DMode(distance, verticalOffset, horizontalOffset)
     end
     
     function Window:Disable3DMode()
