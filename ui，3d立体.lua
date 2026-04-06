@@ -701,12 +701,38 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
-    -- ========== 3D 效果核心功能（修正版） ==========
+    -- ========== 3D 效果核心功能（真正角色前方 + 可点击 + 摁动效果） ==========
     local function update3DPosition()
         if not Window._3DModeEnabled or not Window._3DObjects or not Window._3DObjects.Billboard then return end
         local settings = Window._3DSettings
+        -- 偏移量：X为水平偏移，Y为垂直偏移（头部上方2 + 用户偏移），Z为前方距离
         local offset = Vector3.new(settings.horizontalOffset or 0, 2 + (settings.verticalOffset or 0), settings.distance or 3)
         Window._3DObjects.Billboard.StudsOffset = offset
+    end
+
+    -- 增强按钮点击效果（添加物理按压感）
+    local function addPressEffect(button)
+        local originalSize = button.Size
+        local originalPos = button.Position
+        button.MouseButton1Down:Connect(function()
+            Tween(button, {Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset * 0.95, originalSize.Y.Scale, originalSize.Y.Offset * 0.95), Position = UDim2.new(originalPos.X.Scale, originalPos.X.Offset + 2, originalPos.Y.Scale, originalPos.Y.Offset + 2)}, 0.05)
+        end)
+        button.MouseButton1Up:Connect(function()
+            Tween(button, {Size = originalSize, Position = originalPos}, 0.1)
+        end)
+        button.MouseLeave:Connect(function()
+            Tween(button, {Size = originalSize, Position = originalPos}, 0.1)
+        end)
+    end
+
+    -- 递归为所有按钮添加按压效果
+    local function addPressEffectToAll(parent)
+        for _, child in ipairs(parent:GetChildren()) do
+            if child:IsA("TextButton") or child:IsA("ImageButton") then
+                addPressEffect(child)
+            end
+            addPressEffectToAll(child)
+        end
     end
 
     local function SwitchTo3DMode(distance, verticalOffset, horizontalOffset)
@@ -716,17 +742,16 @@ function Fenglib:CreateWindow(Config)
         verticalOffset = verticalOffset or Window._3DSettings.verticalOffset
         horizontalOffset = horizontalOffset or Window._3DSettings.horizontalOffset
         
-        -- 创建BillboardGui
+        -- 创建BillboardGui（附着在角色头部，出现在前方）
         local billboardGui = Instance.new("BillboardGui")
         billboardGui.Name = "3D_UIBillboard"
-        billboardGui.Size = UDim2.new(0, 550, 0, 350)  -- 稍大一点方便点击
+        billboardGui.Size = UDim2.new(0, 600, 0, 400)  -- 足够大便于点击
         billboardGui.StudsOffset = Vector3.new(horizontalOffset, 2 + verticalOffset, distance)
-        billboardGui.AlwaysOnTop = true
+        billboardGui.AlwaysOnTop = false      -- 不总是显示在最前，增加3D沉浸感
         billboardGui.MaxDistance = 30
         billboardGui.Enabled = true
+        billboardGui.Active = true            -- 必须为true才能接收点击
         billboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        -- 重要：允许点击
-        billboardGui.Active = true
         
         -- 添加光晕效果
         local glowFrame = Instance.new("Frame")
@@ -776,7 +801,7 @@ function Fenglib:CreateWindow(Config)
         -- 调整MainFrame大小
         local mainFrame3D = billboardGui:FindFirstChild("FengYu-Bento")
         if mainFrame3D then
-            mainFrame3D.Size = UDim2.new(0, 550, 0, 350)
+            mainFrame3D.Size = UDim2.new(0, 600, 0, 400)
             mainFrame3D.Position = UDim2.new(0.5, 0, 0.5, 0)
             
             -- 添加3D边框光效
@@ -803,7 +828,10 @@ function Fenglib:CreateWindow(Config)
             edgeGlow.Parent = mainFrame3D
         end
         
-        -- 浮动动画
+        -- 为所有按钮添加按压效果（确保3D模式下也有反馈）
+        addPressEffectToAll(billboardGui)
+        
+        -- 浮动动画（轻微上下浮动，增加生动感）
         local floatConnection
         local time = 0
         floatConnection = RunService.RenderStepped:Connect(function(delta)
@@ -812,8 +840,7 @@ function Fenglib:CreateWindow(Config)
                 return
             end
             time = time + delta * 1.2
-            -- 轻微上下浮动，但不影响点击
-            local yOffset = math.sin(time) * 0.03
+            local yOffset = math.sin(time) * 0.03   -- 仅浮动0.03米，不影响点击
             local settings = Window._3DSettings
             billboardGui.StudsOffset = Vector3.new(
                 settings.horizontalOffset or 0,
@@ -850,7 +877,7 @@ function Fenglib:CreateWindow(Config)
             end)
         end
         
-        -- 隐藏原ScreenGui（但不销毁，方便切换回来）
+        -- 隐藏原ScreenGui
         ScreenGui.Enabled = false
         OpenButton.Visible = false
         
@@ -908,7 +935,7 @@ function Fenglib:CreateWindow(Config)
             Window:Notification("3D模式", "已切换到2D模式", "Info", 2)
         else
             SwitchTo3DMode()
-            Window:Notification("3D模式", "UI已出现在角色面前，可正常点击", "Success", 2)
+            Window:Notification("3D模式", "UI已出现在角色前方，可正常点击", "Success", 2)
         end
     end
     
@@ -938,9 +965,7 @@ function Fenglib:CreateWindow(Config)
         btnTooltip.Visible = false
     end)
 
-    -- 添加3D设置控件（距离和垂直偏移）
-    -- 我们可以在UI内部创建一个默认的“3D设置”部分，但为了不影响原有代码，这里提供API方法
-    -- 用户可以通过调用 Window:Create3DSettingsTab(tab) 来创建，或者直接使用下面的方法
+    -- 3D调节API
     function Window:Set3DDistance(distance)
         distance = clamp(distance, 1, 8)
         Window._3DSettings.distance = distance
@@ -967,7 +992,7 @@ function Fenglib:CreateWindow(Config)
     
     function Window:Create3DSettingsTab(parentTab)
         local section = parentTab:Section("⚙️ 3D模式设置")
-        section:Slider("UI距离", 1, 8, Window._3DSettings.distance, function(val)
+        section:Slider("UI距离 (米)", 1, 8, Window._3DSettings.distance, function(val)
             Window:Set3DDistance(val)
         end)
         section:Slider("垂直偏移", -2, 3, Window._3DSettings.verticalOffset, function(val)
@@ -1357,9 +1382,10 @@ function Fenglib:CreateWindow(Config)
             end)
 
             Btn.MouseButton1Click:Connect(function()
-                Tween(Btn, {Size = UDim2.new(0.97, 0, 0, 38)}, 0.1)
-                task.wait(0.1)
-                Tween(Btn, {Size = UDim2.new(1, 0, 0, 42)}, 0.15)
+                -- 按压动画
+                Tween(Btn, {Size = UDim2.new(0.97, 0, 0, 38), BackgroundTransparency = 0.2}, 0.05)
+                task.wait(0.05)
+                Tween(Btn, {Size = UDim2.new(1, 0, 0, 42), BackgroundTransparency = 0.05}, 0.1)
                 callback()
             end)
 
