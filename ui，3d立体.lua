@@ -152,11 +152,11 @@ function Fenglib:CreateWindow(Config)
     Window.CurrentConfig = ""
     Window._3DModeEnabled = false
     Window._3DObjects = nil
-    Window._3DSettings = {
-        distance = 3,
-        verticalOffset = 0,
-        horizontalOffset = 0,
-        scale = 1.5
+    Window._ProjectorSettings = {
+        distance = 5,
+        width = 8,
+        height = 6,
+        transparency = 0.3
     }
 
     if Config.Theme then
@@ -702,18 +702,7 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
-    -- ========== 3D 投影仪效果（融合LinUI的核心机制） ==========
-    local function update3DPosition()
-        if not Window._3DModeEnabled or not Window._3DObjects or not Window._3DObjects.Part then return end
-        local settings = Window._3DSettings
-        local distance = settings.distance or 3
-        local yOffset = 1.5 + (settings.verticalOffset or 0)
-        local xOffset = settings.horizontalOffset or 0
-        -- 偏移量：相对于相机前方，且带上下左右偏移
-        Window._3DObjects.LookVector = Vector3.new(xOffset, yOffset, -distance)
-    end
-
-    -- 添加按钮按压效果（通用）
+    -- ========== 真正的投影仪效果 ==========
     local function addPressEffect(button)
         local originalSize = button.Size
         local originalPos = button.Position
@@ -737,39 +726,51 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    local function SwitchTo3DMode(distance, verticalOffset, horizontalOffset, scale)
+    -- 创建投影平面（一个半透明的Part，UI投射在上面）
+    local function SwitchToProjectorMode(distance, width, height, transparency)
         if Window._3DModeEnabled then return end
         
-        distance = distance or Window._3DSettings.distance
-        verticalOffset = verticalOffset or Window._3DSettings.verticalOffset
-        horizontalOffset = horizontalOffset or Window._3DSettings.horizontalOffset
-        scale = scale or Window._3DSettings.scale
+        distance = distance or Window._ProjectorSettings.distance
+        width = width or Window._ProjectorSettings.width
+        height = height or Window._ProjectorSettings.height
+        transparency = transparency or Window._ProjectorSettings.transparency
         
-        -- 创建3D投影仪所需的Part
-        local part = Instance.new("Part")
-        part.Name = "FengYu3D_Projector"
-        part.Anchored = true
-        part.CanCollide = false
-        part.Locked = true
-        part.Transparency = 1
-        part.Size = Vector3.new(8, 6, 0.5)  -- 足够容纳UI
-        if syn and syn.protect_gui then syn.protect_gui(part) end
-        part.Parent = workspace
+        -- 创建投影屏幕Part
+        local projectorScreen = Instance.new("Part")
+        projectorScreen.Name = "FengYu_ProjectorScreen"
+        projectorScreen.Anchored = true
+        projectorScreen.CanCollide = false
+        projectorScreen.Locked = true
+        projectorScreen.Transparency = transparency
+        projectorScreen.Size = Vector3.new(width, height, 0.1)
+        projectorScreen.BrickColor = BrickColor.new("White")
+        projectorScreen.Material = Enum.Material.SmoothPlastic
         
-        -- 创建SurfaceGui
+        -- 添加发光效果
+        local selectionBox = Instance.new("SelectionBox")
+        selectionBox.Adornee = projectorScreen
+        selectionBox.Color3 = CurrentTheme.Accent
+        selectionBox.LineThickness = 0.05
+        selectionBox.Transparency = 0.5
+        selectionBox.Parent = projectorScreen
+        
+        if syn and syn.protect_gui then syn.protect_gui(projectorScreen) end
+        projectorScreen.Parent = workspace
+        
+        -- 创建SurfaceGui投射UI
         local surfaceGui = Instance.new("SurfaceGui")
-        surfaceGui.Name = "3D_UISurface"
+        surfaceGui.Name = "ProjectorUI"
         surfaceGui.ResetOnSpawn = false
-        surfaceGui.Face = Enum.NormalId.Back  -- 显示在背面，这样UI会面向相机
+        surfaceGui.Face = Enum.NormalId.Front
         surfaceGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-        surfaceGui.CanvasSize = Vector2.new(800, 600)  -- 与UI实际大小匹配
+        surfaceGui.CanvasSize = Vector2.new(800, 600)
         surfaceGui.ClipsDescendants = true
         surfaceGui.AlwaysOnTop = true
         surfaceGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        surfaceGui.Adornee = part
-        surfaceGui.Parent = part
+        surfaceGui.Adornee = projectorScreen
+        surfaceGui.Parent = projectorScreen
         
-        -- 保存原UI内容（除了通知栏和打开按钮）
+        -- 保存原UI内容
         local originalChildren = {}
         for _, child in ipairs(ScreenGui:GetChildren()) do
             if child ~= OpenButton and child ~= NotificationHolder then
@@ -781,51 +782,59 @@ function Fenglib:CreateWindow(Config)
             child.Parent = surfaceGui
         end
         
-        -- 调整MainFrame大小以适应SurfaceGui
+        -- 调整UI大小以适应投影屏幕
         local mainFrame3D = surfaceGui:FindFirstChild("FengYu-Bento")
         if mainFrame3D then
-            mainFrame3D.Size = UDim2.new(0, 600 * scale, 0, 400 * scale)
+            mainFrame3D.Size = UDim2.new(0, 600, 0, 400)
             mainFrame3D.Position = UDim2.new(0.5, 0, 0.5, 0)
-            
-            -- 添加3D边框光效（可选）
-            local borderGlow = Instance.new("UIStroke")
-            borderGlow.Thickness = 4
-            borderGlow.Color = CurrentTheme.Accent
-            borderGlow.Transparency = 0.5
-            borderGlow.Parent = mainFrame3D
-            table.insert(Registry, {Object = borderGlow, Property = "Color", Type = "Accent"})
         end
+        
+        -- 添加投影光晕效果
+        local light = Instance.new("PointLight")
+        light.Brightness = 2
+        light.Range = 15
+        light.Color = CurrentTheme.Accent
+        light.Parent = projectorScreen
         
         -- 为所有按钮添加按压效果
         addPressEffectToAll(surfaceGui)
         
-        -- 相机跟随：每一帧将Part置于相机前方指定偏移处，并使其面向相机（因为SurfaceGui在背面，Part的背面需对准相机）
-        local renderConnection
-        local lookVector = Vector3.new(horizontalOffset, 1.5 + verticalOffset, -distance)
-        renderConnection = RunService.RenderStepped:Connect(function()
-            if not part.Parent then
-                if renderConnection then renderConnection:Disconnect() end
+        -- 将投影屏幕放置在玩家前方
+        local function updateScreenPosition()
+            local character = LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                local rootPart = character.HumanoidRootPart
+                local lookVector = rootPart.CFrame.LookVector
+                local targetPos = rootPart.Position + lookVector * distance
+                targetPos = Vector3.new(targetPos.X, targetPos.Y - 1.5, targetPos.Z)
+                projectorScreen.CFrame = CFrame.new(targetPos) * CFrame.Angles(0, math.rad(180), 0)
+            end
+        end
+        
+        updateScreenPosition()
+        
+        -- 每帧更新屏幕位置（跟随玩家）
+        local updateConnection
+        updateConnection = RunService.RenderStepped:Connect(function()
+            if not projectorScreen.Parent then
+                if updateConnection then updateConnection:Disconnect() end
                 return
             end
-            local cam = workspace.CurrentCamera
-            if cam then
-                -- 将Part放置在相机前方偏移位置
-                local targetCF = cam.CFrame * CFrame.new(lookVector)
-                part.CFrame = targetCF
-            end
+            updateScreenPosition()
         end)
         
         -- 隐藏原ScreenGui
         ScreenGui.Enabled = false
         OpenButton.Visible = false
         
-        -- 存储3D对象
+        -- 存储投影仪对象
         Window._3DModeEnabled = true
         Window._3DObjects = {
-            Part = part,
+            Screen = projectorScreen,
             SurfaceGui = surfaceGui,
-            RenderConnection = renderConnection,
-            LookVector = lookVector
+            UpdateConnection = updateConnection,
+            Light = light,
+            SelectionBox = selectionBox
         }
         
         return true
@@ -834,28 +843,24 @@ function Fenglib:CreateWindow(Config)
     local function SwitchTo2DMode()
         if not Window._3DModeEnabled then return end
         
-        -- 清理3D对象
         if Window._3DObjects then
-            if Window._3DObjects.RenderConnection then
-                Window._3DObjects.RenderConnection:Disconnect()
+            if Window._3DObjects.UpdateConnection then
+                Window._3DObjects.UpdateConnection:Disconnect()
             end
             if Window._3DObjects.SurfaceGui then
-                -- 将UI内容移回ScreenGui
                 local surfaceGui = Window._3DObjects.SurfaceGui
                 for _, child in ipairs(surfaceGui:GetChildren()) do
                     child.Parent = ScreenGui
                 end
             end
-            if Window._3DObjects.Part then
-                Window._3DObjects.Part:Destroy()
+            if Window._3DObjects.Screen then
+                Window._3DObjects.Screen:Destroy()
             end
         end
         
-        -- 恢复原ScreenGui
         ScreenGui.Enabled = true
         OpenButton.Visible = true
         
-        -- 恢复MainFrame大小
         local mainFrame2D = ScreenGui:FindFirstChild("FengYu-Bento")
         if mainFrame2D then
             mainFrame2D.Size = UDim2.new(0, 500, 0, 299)
@@ -867,26 +872,25 @@ function Fenglib:CreateWindow(Config)
         return true
     end
     
-    local function Toggle3DMode()
+    local function ToggleProjectorMode()
         if Window._3DModeEnabled then
             SwitchTo2DMode()
-            Window:Notification("3D模式", "已切换到2D模式", "Info", 2)
+            Window:Notification("投影仪模式", "已关闭投影仪效果", "Info", 2)
         else
-            SwitchTo3DMode()
-            Window:Notification("3D模式", "投影仪效果已启用，UI悬浮在视角前方", "Success", 2)
+            SwitchToProjectorMode()
+            Window:Notification("投影仪模式", "UI已投射到前方屏幕上", "Success", 2)
         end
     end
     
-    -- 添加3D切换按钮到右上角
+    -- 添加投影仪切换按钮
     local Toggle3DBtn = createIconButton("rbxassetid://6031090998", function()
-        Toggle3DMode()
+        ToggleProjectorMode()
     end)
     
-    -- 按钮提示
     local btnTooltip = Instance.new("TextLabel")
-    btnTooltip.Text = "切换2D/3D投影仪模式"
-    btnTooltip.Size = UDim2.new(0, 120, 0, 20)
-    btnTooltip.Position = UDim2.new(1, -130, 0.5, -10)
+    btnTooltip.Text = "切换投影仪模式"
+    btnTooltip.Size = UDim2.new(0, 100, 0, 20)
+    btnTooltip.Position = UDim2.new(1, -110, 0.5, -10)
     btnTooltip.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
     btnTooltip.BackgroundTransparency = 0.2
     btnTooltip.Font = Enum.Font.Gotham
@@ -903,74 +907,65 @@ function Fenglib:CreateWindow(Config)
         btnTooltip.Visible = false
     end)
 
-    -- 3D调节API（保持兼容）
-    function Window:Set3DDistance(distance)
-        distance = clamp(distance, 1, 8)
-        Window._3DSettings.distance = distance
-        if Window._3DModeEnabled and Window._3DObjects then
-            Window._3DObjects.LookVector = Vector3.new(
-                Window._3DSettings.horizontalOffset,
-                1.5 + Window._3DSettings.verticalOffset,
-                -distance
-            )
+    -- 投影仪设置API
+    function Window:SetProjectorDistance(distance)
+        distance = clamp(distance, 3, 15)
+        Window._ProjectorSettings.distance = distance
+        if Window._3DModeEnabled and Window._3DObjects and Window._3DObjects.Screen then
+            local character = LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                local rootPart = character.HumanoidRootPart
+                local lookVector = rootPart.CFrame.LookVector
+                local targetPos = rootPart.Position + lookVector * distance
+                targetPos = Vector3.new(targetPos.X, targetPos.Y - 1.5, targetPos.Z)
+                Window._3DObjects.Screen.CFrame = CFrame.new(targetPos) * CFrame.Angles(0, math.rad(180), 0)
+            end
         end
     end
     
-    function Window:Set3DVerticalOffset(offset)
-        offset = clamp(offset, -2, 3)
-        Window._3DSettings.verticalOffset = offset
-        if Window._3DModeEnabled and Window._3DObjects then
-            Window._3DObjects.LookVector = Vector3.new(
-                Window._3DSettings.horizontalOffset,
-                1.5 + offset,
-                -Window._3DSettings.distance
-            )
+    function Window:SetProjectorSize(width, height)
+        width = clamp(width, 4, 12)
+        height = clamp(height, 3, 9)
+        Window._ProjectorSettings.width = width
+        Window._ProjectorSettings.height = height
+        if Window._3DModeEnabled and Window._3DObjects and Window._3DObjects.Screen then
+            Window._3DObjects.Screen.Size = Vector3.new(width, height, 0.1)
         end
     end
     
-    function Window:Set3DHorizontalOffset(offset)
-        offset = clamp(offset, -2, 2)
-        Window._3DSettings.horizontalOffset = offset
-        if Window._3DModeEnabled and Window._3DObjects then
-            Window._3DObjects.LookVector = Vector3.new(
-                offset,
-                1.5 + Window._3DSettings.verticalOffset,
-                -Window._3DSettings.distance
-            )
+    function Window:SetProjectorTransparency(transparency)
+        transparency = clamp(transparency, 0, 0.8)
+        Window._ProjectorSettings.transparency = transparency
+        if Window._3DModeEnabled and Window._3DObjects and Window._3DObjects.Screen then
+            Window._3DObjects.Screen.Transparency = transparency
         end
     end
     
-    function Window:Set3DScale(scale)
-        scale = clamp(scale, 0.8, 2.5)
-        Window._3DSettings.scale = scale
-        -- 缩放需要重建3D模式，简单处理：提示重启
-        if Window._3DModeEnabled then
-            Window:Notification("3D模式", "缩放已更改，请重新切换3D模式生效", "Info", 2)
-        end
-    end
-    
-    function Window:Create3DSettingsTab(parentTab)
-        local section = parentTab:Section("⚙️ 3D投影仪设置")
-        section:Slider("UI距离", 1, 8, Window._3DSettings.distance, function(val)
-            Window:Set3DDistance(val)
+    function Window:CreateProjectorSettingsTab(parentTab)
+        local section = parentTab:Section("📽️ 投影仪设置")
+        section:Slider("投影距离", 3, 15, Window._ProjectorSettings.distance, function(val)
+            Window:SetProjectorDistance(val)
         end)
-        section:Slider("垂直偏移", -2, 3, Window._3DSettings.verticalOffset, function(val)
-            Window:Set3DVerticalOffset(val)
+        section:Slider("屏幕宽度", 4, 12, Window._ProjectorSettings.width, function(val)
+            Window:SetProjectorSize(val, Window._ProjectorSettings.height)
         end)
-        section:Slider("水平偏移", -2, 2, Window._3DSettings.horizontalOffset, function(val)
-            Window:Set3DHorizontalOffset(val)
+        section:Slider("屏幕高度", 3, 9, Window._ProjectorSettings.height, function(val)
+            Window:SetProjectorSize(Window._ProjectorSettings.width, val)
         end)
-        section:Slider("UI缩放", 0.8, 2.5, Window._3DSettings.scale, function(val)
-            Window:Set3DScale(val)
+        section:Slider("屏幕透明度", 0, 0.8, Window._ProjectorSettings.transparency, function(val)
+            Window:SetProjectorTransparency(val)
         end)
-        section:Button("重新应用3D模式", function()
-            if Window._3DModeEnabled then
-                SwitchTo2DMode()
-                task.wait(0.2)
-                SwitchTo3DMode()
-                Window:Notification("3D模式", "已重新应用投影仪效果", "Success", 1)
-            else
-                Window:Notification("3D模式", "请先切换到3D模式", "Info", 1)
+        section:Button("刷新投影位置", function()
+            if Window._3DModeEnabled and Window._3DObjects and Window._3DObjects.Screen then
+                local character = LocalPlayer.Character
+                if character and character:FindFirstChild("HumanoidRootPart") then
+                    local rootPart = character.HumanoidRootPart
+                    local lookVector = rootPart.CFrame.LookVector
+                    local targetPos = rootPart.Position + lookVector * Window._ProjectorSettings.distance
+                    targetPos = Vector3.new(targetPos.X, targetPos.Y - 1.5, targetPos.Z)
+                    Window._3DObjects.Screen.CFrame = CFrame.new(targetPos) * CFrame.Angles(0, math.rad(180), 0)
+                    Window:Notification("投影仪", "屏幕位置已刷新", "Success", 1)
+                end
             end
         end)
     end
@@ -1172,19 +1167,19 @@ function Fenglib:CreateWindow(Config)
         end
     end
     
-    function Window:Enable3DMode(distance, verticalOffset, horizontalOffset, scale)
-        return SwitchTo3DMode(distance, verticalOffset, horizontalOffset, scale)
+    function Window:EnableProjectorMode(distance, width, height, transparency)
+        return SwitchToProjectorMode(distance, width, height, transparency)
     end
     
-    function Window:Disable3DMode()
+    function Window:DisableProjectorMode()
         return SwitchTo2DMode()
     end
     
-    function Window:Toggle3DMode()
-        return Toggle3DMode()
+    function Window:ToggleProjectorMode()
+        return ToggleProjectorMode()
     end
     
-    function Window:Is3DMode()
+    function Window:IsProjectorMode()
         return Window._3DModeEnabled
     end
 
