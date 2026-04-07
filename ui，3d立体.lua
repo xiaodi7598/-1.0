@@ -466,7 +466,7 @@ function Fenglib:CreateWindow(Config)
 
     -- Tab Container (Left Sidebar)
     local TabContainer = Instance.new("ScrollingFrame")
-    TabContainer.Size = UDim2.new(0, 160, 0.88, 0)
+    TabContainer.Size = UDim2.new(0, 130, 0.88, 0)
     TabContainer.BackgroundTransparency = 1
     TabContainer.ScrollBarThickness = 0
     TabContainer.Parent = Content
@@ -571,8 +571,8 @@ function Fenglib:CreateWindow(Config)
     UserInputService.InputChanged:Connect(function(input)
         if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - resizeStart
-            local newWidth = math.max(500, startSize.X.Offset + delta.X)
-            local newHeight = math.max(350, startSize.Y.Offset + delta.Y)
+            local newWidth = math.max(350, startSize.X.Offset + delta.X)
+            local newHeight = math.max(500, startSize.Y.Offset + delta.Y)
             MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
         end
     end)
