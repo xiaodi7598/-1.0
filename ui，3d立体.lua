@@ -187,7 +187,7 @@ function Fenglib:CreateWindow(Config)
     ScreenGui.Parent = CoreGui
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ScreenInsets = Enum.ScreenInsets.None
-    -- 启用穿透效果 - 让GUI不阻挡游戏交互
+    -- 全局穿透：让UI不阻挡游戏点击
     ScreenGui.IgnoreGuiInset = true
     if syn and syn.protect_gui then syn.protect_gui(ScreenGui) elseif gethui then ScreenGui.Parent = gethui() end
 
@@ -243,14 +243,12 @@ function Fenglib:CreateWindow(Config)
     BackFrame.ZIndex = -1
     Instance.new("UICorner", BackFrame).CornerRadius = UDim.new(0, 14)
     
-    -- 背面边框效果
     local BackStroke = Instance.new("UIStroke")
     BackStroke.Thickness = 2
     BackStroke.Transparency = 0.3
     BackStroke.Parent = BackFrame
     AddToRegistry(BackStroke, "Color", "Stroke")
     
-    -- 背面玻璃模糊效果
     local BackBlur = Instance.new("Frame")
     BackBlur.Size = UDim2.new(1, 0, 1, 0)
     BackBlur.BackgroundTransparency = 0.4
@@ -259,7 +257,6 @@ function Fenglib:CreateWindow(Config)
     BackBlur.ZIndex = -2
     Instance.new("UICorner", BackBlur).CornerRadius = UDim.new(0, 14)
     
-    -- 背面渐变光泽
     local BackGradient = Instance.new("UIGradient")
     BackGradient.Rotation = 135
     BackGradient.Color = ColorSequence.new({
@@ -274,7 +271,6 @@ function Fenglib:CreateWindow(Config)
     })
     BackGradient.Parent = BackBlur
     
-    -- 背面反射光晕
     local BackGlow = Instance.new("ImageLabel")
     BackGlow.Size = UDim2.new(1.2, 0, 1.2, 0)
     BackGlow.Position = UDim2.new(-0.1, 0, -0.1, 0)
@@ -286,26 +282,20 @@ function Fenglib:CreateWindow(Config)
     BackGlow.Parent = BackFrame
     BackGlow.ZIndex = -3
 
-    -- 背面镜像内容（显示正面内容的镜像）
     local MirrorContainer = Instance.new("Frame")
     MirrorContainer.Size = UDim2.new(1, 0, 1, 0)
     MirrorContainer.BackgroundTransparency = 1
     MirrorContainer.Parent = BackFrame
     MirrorContainer.ZIndex = -1
     
-    -- 镜像变换 - 水平翻转
     local MirrorUIScale = Instance.new("UIScale")
     MirrorUIScale.Scale = -1
     MirrorUIScale.Parent = MirrorContainer
     
-    -- 同步正面内容的镜像
     local function updateMirror()
         for _, child in ipairs(MirrorContainer:GetChildren()) do
             child:Destroy()
         end
-        
-        -- 复制主要视觉元素到背面（不复制交互元素）
-        local elementsToMirror = {"Topbar", "Content", "WindowButtons", "WindowIcon", "WindowResizer"}
         for _, child in ipairs(MainFrame:GetChildren()) do
             if child:IsA("Frame") or child:IsA("TextLabel") or child:IsA("ImageLabel") then
                 if child.Name ~= "BackFrame" and child.Name ~= "FloatingOpenButton" then
@@ -319,7 +309,6 @@ function Fenglib:CreateWindow(Config)
                     if clone:IsA("ImageLabel") then
                         clone.ImageTransparency = 0.5
                     end
-                    -- 移除按钮交互
                     if clone:IsA("TextButton") or clone:IsA("ImageButton") then
                         clone.Active = false
                         clone.Selectable = false
@@ -334,7 +323,6 @@ function Fenglib:CreateWindow(Config)
     MainFrame.ChildRemoved:Connect(updateMirror)
     task.spawn(updateMirror)
     
-    -- 背面动态光泽旋转
     local glowRotation = 0
     local glowConnection
     glowConnection = RunService.RenderStepped:Connect(function()
@@ -467,6 +455,7 @@ function Fenglib:CreateWindow(Config)
         btn.TextColor3 = Color3.new(1, 1, 1)
         btn.BackgroundTransparency = 1
         btn.Parent = ButtonGroup
+        btn.Modal = false  -- 穿透
 
         local bg = NewRoundFrame(9, "Squircle", {
             Size = UDim2.new(1, 0, 1, 0),
@@ -517,6 +506,7 @@ function Fenglib:CreateWindow(Config)
         btn.Text = ""
         btn.BackgroundTransparency = 1
         btn.Parent = ButtonGroup
+        btn.Modal = false
 
         local bg = NewRoundFrame(9, "Squircle", {
             Size = UDim2.new(1, 0, 1, 0),
@@ -680,6 +670,7 @@ function Fenglib:CreateWindow(Config)
     Resizer.Text = ""
     Resizer.ZIndex = 30
     Resizer.Visible = false
+    Resizer.Modal = false
 
     local stroke = Instance.new("UIStroke")
     stroke.Thickness = 4
@@ -725,7 +716,7 @@ function Fenglib:CreateWindow(Config)
         distance = 5,
         width = 8,
         height = 6,
-        transparency = 0.35,  -- 优化：默认透明度提高，便于穿透
+        transparency = 0.35,
         autoSize = true
     }
 
@@ -752,14 +743,13 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
-    -- 优化：记录上一次有效的UI尺寸，防止最小化时尺寸为0
+    -- 记录上一次有效的UI尺寸，防止最小化时屏幕尺寸为0
     local lastValidUISize = Vector2.new(500, 299)
     function Window:UpdateProjectorSizeFromUI()
         if not Window._ProjectorModeEnabled or not Window._ProjectorObjects then return end
         local mainFrame = Window._ProjectorObjects.SurfaceGui:FindFirstChild("FengYu-Bento")
         if not mainFrame then return end
         local absSize = mainFrame.AbsoluteSize
-        -- 如果窗口被隐藏或尺寸无效，使用上一次记录的尺寸
         if absSize.X <= 1 or absSize.Y <= 1 then
             absSize = lastValidUISize
         else
@@ -768,9 +758,9 @@ function Fenglib:CreateWindow(Config)
         local aspect = absSize.X / absSize.Y
         local targetHeight = Window._ProjectorSettings.height
         local targetWidth = targetHeight * aspect
-        targetWidth = clamp(targetWidth, 3, 15)  -- 放宽范围
+        targetWidth = clamp(targetWidth, 3, 15)
         targetHeight = clamp(targetHeight, 2, 12)
-        Window._ProjectorObjects.Screen.Size = Vector3.new(targetWidth, targetHeight, 0.05)  -- 厚度减半更轻薄
+        Window._ProjectorObjects.Screen.Size = Vector3.new(targetWidth, targetHeight, 0.05)
         Window._ProjectorSettings.width = targetWidth
         Window._ProjectorSettings.height = targetHeight
     end
@@ -788,7 +778,6 @@ function Fenglib:CreateWindow(Config)
         projectorScreen.Anchored = true
         projectorScreen.CanCollide = false
         projectorScreen.Locked = true
-        -- 优化：使用玻璃材质 + 高透明度，实现穿透效果
         projectorScreen.Transparency = transparency
         projectorScreen.Size = Vector3.new(width, height, 0.05)
         projectorScreen.Material = Enum.Material.Glass
@@ -797,7 +786,7 @@ function Fenglib:CreateWindow(Config)
         projectorScreen.TopSurface = Enum.SurfaceType.Smooth
         projectorScreen.BottomSurface = Enum.SurfaceType.Smooth
         
-        -- 优化：添加双面渲染，让从背面也能看到UI内容（增强透视感）
+        -- 添加纹理增强透视感
         local texture = Instance.new("Texture")
         texture.StudsPerTileU = 1
         texture.StudsPerTileV = 1
@@ -826,7 +815,6 @@ function Fenglib:CreateWindow(Config)
         surfaceGui.Adornee = projectorScreen
         surfaceGui.Parent = projectorScreen
         
-        -- 优化：保存当前所有UI元素（排除通知和悬浮按钮）
         local originalChildren = {}
         for _, child in ipairs(ScreenGui:GetChildren()) do
             if child ~= OpenButton and child ~= NotificationHolder then
@@ -840,19 +828,17 @@ function Fenglib:CreateWindow(Config)
         
         Window._savedMainFrameSize = MainFrame.Size
         Window._savedMainFramePos = MainFrame.Position
-        -- 优化：投影模式下窗口默认大小更适合屏幕比例
         MainFrame.Size = UDim2.new(0, 600, 0, 400)
         MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         
         addPressEffectToAll(surfaceGui)
         
         local pointLight = Instance.new("PointLight")
-        pointLight.Brightness = 1.8   -- 降低亮度避免过曝
+        pointLight.Brightness = 1.8
         pointLight.Range = 18
         pointLight.Color = CurrentTheme.Accent
         pointLight.Parent = projectorScreen
         
-        -- 优化：添加边缘光晕效果（增强科技感）
         local attachment = Instance.new("Attachment")
         attachment.Parent = projectorScreen
         local glowBeam = Instance.new("Beam")
@@ -875,7 +861,6 @@ function Fenglib:CreateWindow(Config)
             targetPos = Vector3.new(targetPos.X, targetPos.Y + 1.2, targetPos.Z)
             
             local screenCF = CFrame.lookAt(targetPos, rootPart.Position, Vector3.new(0, 1, 0))
-            
             projectorScreen.CFrame = screenCF
         end
         
@@ -888,13 +873,8 @@ function Fenglib:CreateWindow(Config)
                 return
             end
             updateScreenPosition()
-            -- 优化：实时同步投影仪光效颜色
-            if pointLight then
-                pointLight.Color = CurrentTheme.Accent
-            end
-            if glowBeam then
-                glowBeam.Color = ColorSequence.new(CurrentTheme.Accent)
-            end
+            if pointLight then pointLight.Color = CurrentTheme.Accent end
+            if glowBeam then glowBeam.Color = ColorSequence.new(CurrentTheme.Accent) end
         end)
         
         local sizeConnection
@@ -903,12 +883,10 @@ function Fenglib:CreateWindow(Config)
                 Window:UpdateProjectorSizeFromUI()
             end
         end)
-        -- 优化：监听窗口可见性变化，当最小化时保持屏幕大小不变（使用上次有效尺寸）
+        
         local visibilityConnection
         visibilityConnection = MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
             if not MainFrame.Visible then
-                -- 窗口最小化时，不调整屏幕尺寸，保持原样，用户仍可看到屏幕上的内容（关闭按钮依然可见）
-                -- 不做任何操作，仅确保 UpdateProjectorSizeFromUI 不会把尺寸变成0
                 task.wait(0.05)
                 Window:UpdateProjectorSizeFromUI()
             end
@@ -1090,7 +1068,6 @@ function Fenglib:CreateWindow(Config)
     OpenButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
     OpenButton.ImageTransparency = 0.15
     OpenButton.ZIndex = 10  
-    -- 开启穿透效果
     OpenButton.Modal = false
 
     local openCorner = Instance.new("UICorner")
@@ -1116,7 +1093,7 @@ function Fenglib:CreateWindow(Config)
 
     OpenButton.Visible = false
 
-    -- 添加全局穿透效果 - 让所有按钮都不阻挡游戏交互
+    -- 全局穿透：递归设置所有按钮 Modal = false
     local function setModalFalseForAll(parent)
         for _, child in ipairs(parent:GetChildren()) do
             if child:IsA("TextButton") or child:IsA("ImageButton") then
