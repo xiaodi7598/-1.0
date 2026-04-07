@@ -725,7 +725,7 @@ function Fenglib:CreateWindow(Config)
         distance = 5,
         width = 8,
         height = 6,
-        transparency = 0.3,
+        transparency = 0.35,  -- 优化：默认透明度提高，便于穿透
         autoSize = true
     }
 
@@ -752,18 +752,25 @@ function Fenglib:CreateWindow(Config)
         end
     end
 
+    -- 优化：记录上一次有效的UI尺寸，防止最小化时尺寸为0
+    local lastValidUISize = Vector2.new(500, 299)
     function Window:UpdateProjectorSizeFromUI()
         if not Window._ProjectorModeEnabled or not Window._ProjectorObjects then return end
         local mainFrame = Window._ProjectorObjects.SurfaceGui:FindFirstChild("FengYu-Bento")
         if not mainFrame then return end
         local absSize = mainFrame.AbsoluteSize
-        if absSize.X <= 0 or absSize.Y <= 0 then return end
+        -- 如果窗口被隐藏或尺寸无效，使用上一次记录的尺寸
+        if absSize.X <= 1 or absSize.Y <= 1 then
+            absSize = lastValidUISize
+        else
+            lastValidUISize = absSize
+        end
         local aspect = absSize.X / absSize.Y
         local targetHeight = Window._ProjectorSettings.height
         local targetWidth = targetHeight * aspect
-        targetWidth = clamp(targetWidth, 4, 12)
-        targetHeight = clamp(targetHeight, 3, 9)
-        Window._ProjectorObjects.Screen.Size = Vector3.new(targetWidth, targetHeight, 0.1)
+        targetWidth = clamp(targetWidth, 3, 15)  -- 放宽范围
+        targetHeight = clamp(targetHeight, 2, 12)
+        Window._ProjectorObjects.Screen.Size = Vector3.new(targetWidth, targetHeight, 0.05)  -- 厚度减半更轻薄
         Window._ProjectorSettings.width = targetWidth
         Window._ProjectorSettings.height = targetHeight
     end
@@ -781,18 +788,27 @@ function Fenglib:CreateWindow(Config)
         projectorScreen.Anchored = true
         projectorScreen.CanCollide = false
         projectorScreen.Locked = true
+        -- 优化：使用玻璃材质 + 高透明度，实现穿透效果
         projectorScreen.Transparency = transparency
-        projectorScreen.Size = Vector3.new(width, height, 0.1)
+        projectorScreen.Size = Vector3.new(width, height, 0.05)
+        projectorScreen.Material = Enum.Material.Glass
+        projectorScreen.Reflectance = 0.2
         projectorScreen.BrickColor = BrickColor.new("White")
-        projectorScreen.Material = Enum.Material.SmoothPlastic
         projectorScreen.TopSurface = Enum.SurfaceType.Smooth
         projectorScreen.BottomSurface = Enum.SurfaceType.Smooth
+        
+        -- 优化：添加双面渲染，让从背面也能看到UI内容（增强透视感）
+        local texture = Instance.new("Texture")
+        texture.StudsPerTileU = 1
+        texture.StudsPerTileV = 1
+        texture.Transparency = 0.8
+        texture.Parent = projectorScreen
         
         local selectionBox = Instance.new("SelectionBox")
         selectionBox.Adornee = projectorScreen
         selectionBox.Color3 = CurrentTheme.Accent
-        selectionBox.LineThickness = 0.08
-        selectionBox.Transparency = 0.4
+        selectionBox.LineThickness = 0.06
+        selectionBox.Transparency = 0.3
         selectionBox.Parent = projectorScreen
         
         if syn and syn.protect_gui then syn.protect_gui(projectorScreen) end
@@ -810,6 +826,7 @@ function Fenglib:CreateWindow(Config)
         surfaceGui.Adornee = projectorScreen
         surfaceGui.Parent = projectorScreen
         
+        -- 优化：保存当前所有UI元素（排除通知和悬浮按钮）
         local originalChildren = {}
         for _, child in ipairs(ScreenGui:GetChildren()) do
             if child ~= OpenButton and child ~= NotificationHolder then
@@ -823,17 +840,28 @@ function Fenglib:CreateWindow(Config)
         
         Window._savedMainFrameSize = MainFrame.Size
         Window._savedMainFramePos = MainFrame.Position
-        
+        -- 优化：投影模式下窗口默认大小更适合屏幕比例
         MainFrame.Size = UDim2.new(0, 600, 0, 400)
         MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         
         addPressEffectToAll(surfaceGui)
         
         local pointLight = Instance.new("PointLight")
-        pointLight.Brightness = 2.5
-        pointLight.Range = 20
+        pointLight.Brightness = 1.8   -- 降低亮度避免过曝
+        pointLight.Range = 18
         pointLight.Color = CurrentTheme.Accent
         pointLight.Parent = projectorScreen
+        
+        -- 优化：添加边缘光晕效果（增强科技感）
+        local attachment = Instance.new("Attachment")
+        attachment.Parent = projectorScreen
+        local glowBeam = Instance.new("Beam")
+        glowBeam.Attachment0 = attachment
+        glowBeam.Width0 = 0.05
+        glowBeam.Width1 = 0.05
+        glowBeam.Transparency = NumberSequence.new(0.5)
+        glowBeam.Color = ColorSequence.new(CurrentTheme.Accent)
+        glowBeam.Parent = projectorScreen
         
         local function updateScreenPosition()
             local character = LocalPlayer.Character
@@ -860,6 +888,13 @@ function Fenglib:CreateWindow(Config)
                 return
             end
             updateScreenPosition()
+            -- 优化：实时同步投影仪光效颜色
+            if pointLight then
+                pointLight.Color = CurrentTheme.Accent
+            end
+            if glowBeam then
+                glowBeam.Color = ColorSequence.new(CurrentTheme.Accent)
+            end
         end)
         
         local sizeConnection
@@ -868,6 +903,17 @@ function Fenglib:CreateWindow(Config)
                 Window:UpdateProjectorSizeFromUI()
             end
         end)
+        -- 优化：监听窗口可见性变化，当最小化时保持屏幕大小不变（使用上次有效尺寸）
+        local visibilityConnection
+        visibilityConnection = MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+            if not MainFrame.Visible then
+                -- 窗口最小化时，不调整屏幕尺寸，保持原样，用户仍可看到屏幕上的内容（关闭按钮依然可见）
+                -- 不做任何操作，仅确保 UpdateProjectorSizeFromUI 不会把尺寸变成0
+                task.wait(0.05)
+                Window:UpdateProjectorSizeFromUI()
+            end
+        end)
+        
         task.wait(0.1)
         Window:UpdateProjectorSizeFromUI()
         
@@ -877,8 +923,10 @@ function Fenglib:CreateWindow(Config)
             SurfaceGui = surfaceGui,
             UpdateConnection = updateConnection,
             SizeConnection = sizeConnection,
+            VisibilityConnection = visibilityConnection,
             Light = pointLight,
-            SelectionBox = selectionBox
+            SelectionBox = selectionBox,
+            Beam = glowBeam
         }
         
         return true
@@ -893,6 +941,9 @@ function Fenglib:CreateWindow(Config)
             end
             if Window._ProjectorObjects.SizeConnection then
                 Window._ProjectorObjects.SizeConnection:Disconnect()
+            end
+            if Window._ProjectorObjects.VisibilityConnection then
+                Window._ProjectorObjects.VisibilityConnection:Disconnect()
             end
             if Window._ProjectorObjects.SurfaceGui then
                 local surfaceGui = Window._ProjectorObjects.SurfaceGui
@@ -925,7 +976,7 @@ function Fenglib:CreateWindow(Config)
             Window:Notification("投影仪模式", "已关闭投影仪效果，UI返回屏幕", "Info", 2)
         else
             SwitchToProjectorMode()
-            Window:Notification("投影仪模式", "UI已投射到面前屏幕，屏幕正面朝向玩家", "Success", 2)
+            Window:Notification("投影仪模式", "UI已投射到面前屏幕，屏幕半透明且不遮挡角色", "Success", 2)
         end
     end
     
@@ -1299,13 +1350,13 @@ function Fenglib:CreateWindow(Config)
     end
     
     function Window:SetProjectorSize(width, height)
-        width = clamp(width, 4, 12)
-        height = clamp(height, 3, 9)
+        width = clamp(width, 3, 15)
+        height = clamp(height, 2, 12)
         Window._ProjectorSettings.width = width
         Window._ProjectorSettings.height = height
         Window._ProjectorSettings.autoSize = false
         if Window._ProjectorModeEnabled and Window._ProjectorObjects and Window._ProjectorObjects.Screen then
-            Window._ProjectorObjects.Screen.Size = Vector3.new(width, height, 0.1)
+            Window._ProjectorObjects.Screen.Size = Vector3.new(width, height, 0.05)
         end
     end
     
@@ -1322,10 +1373,10 @@ function Fenglib:CreateWindow(Config)
         section:Slider("投影距离", 3, 15, Window._ProjectorSettings.distance, function(val)
             Window:SetProjectorDistance(val)
         end)
-        section:Slider("屏幕宽度", 4, 12, Window._ProjectorSettings.width, function(val)
+        section:Slider("屏幕宽度", 3, 15, Window._ProjectorSettings.width, function(val)
             Window:SetProjectorSize(val, Window._ProjectorSettings.height)
         end)
-        section:Slider("屏幕高度", 3, 9, Window._ProjectorSettings.height, function(val)
+        section:Slider("屏幕高度", 2, 12, Window._ProjectorSettings.height, function(val)
             Window:SetProjectorSize(Window._ProjectorSettings.width, val)
         end)
         section:Slider("屏幕透明度", 0, 0.8, Window._ProjectorSettings.transparency, function(val)
